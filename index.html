@@ -35,6 +35,14 @@ a.job:active{background:#26262c}
 .job.past{opacity:.55}
 .arrow{color:var(--ink3);font-size:20px}
 footer{color:var(--ink3);font-size:12px;text-align:center;padding:8px 16px 28px}
+
+/* 下拉重新整理：關掉瀏覽器自帶的，改用頁面自己的一套，兩種開法（瀏覽器、主畫面）行為一致 */
+html,body{overscroll-behavior-y:contain}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top) - 48px);z-index:100;width:170px;margin-left:-85px;height:38px;
+  border-radius:999px;background:#1d1d22;border:1px solid #33333a;color:#b5b5bd;font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.ptr.back{transition:transform .2s}
+.ptr.ready{color:#fff;border-color:#ff4d5a;background:#3a1b1f}
 </style>
 </head>
 <body>
@@ -66,6 +74,43 @@ function render() {
 }
 render();
 setInterval(render, 60000);
+</script>
+<script>
+(function () {
+  const TH = 80;                       // 手指往下拉超過 80px 放開才重新整理，避免碰一下就觸發
+  const bar = document.createElement('div');
+  bar.className = 'ptr'; bar.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(bar);
+  const atTop = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+  let y0 = null, dy = 0;
+  function reset() { bar.classList.add('back'); bar.classList.remove('ready'); bar.style.transform = ''; y0 = null; dy = 0; }
+  addEventListener('touchstart', e => {
+    y0 = (e.touches.length === 1 && atTop() && !document.body.classList.contains('timing')) ? e.touches[0].clientY : null;
+    dy = 0;
+  }, {passive: true});
+  addEventListener('touchmove', e => {
+    if (y0 === null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy <= 0 || !atTop()) { reset(); return; }
+    bar.classList.remove('back');
+    bar.style.transform = `translateY(${Math.min(dy * 0.6, 70)}px)`;
+    const ready = dy >= TH;
+    bar.classList.toggle('ready', ready);
+    bar.textContent = ready ? '放開重新整理' : '下拉重新整理';
+  }, {passive: true});
+  addEventListener('touchend', () => {
+    if (y0 !== null && dy >= TH) {
+      // 加到 iPhone 主畫面後，一般的重新載入常拿到快取的舊版（Lee 2026-09-28）：
+      // 先跳過快取重抓原網址（順便把快取換成新版，下次從桌面開也是新的），再用帶時間戳的網址打開
+      bar.textContent = '重新整理中…';
+      const go = () => location.replace(location.pathname + '?r=' + Date.now() + location.hash);
+      fetch(location.pathname, {cache: 'reload'}).then(go, go);
+      return;
+    }
+    reset();
+  });
+  addEventListener('touchcancel', reset);
+})();
 </script>
 <!--mv-pagecount v1-->
 <script>(function(){try{var K="mv_device_id",i=localStorage.getItem(K);if(!i){i=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2);localStorage.setItem(K,i);}var u="https://mv-count.tatujinx.workers.dev/hit?p=WORK-TIMELINE&d="+encodeURIComponent(i);if(navigator.sendBeacon){navigator.sendBeacon(u);}else{fetch(u,{mode:"no-cors",keepalive:true});}}catch(e){}})();</script>
