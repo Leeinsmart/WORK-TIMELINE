@@ -54,7 +54,9 @@ function card(j, t) {
   const on = j.date <= t && t <= j.end, over = j.end < t;
   const cls = on ? 'today' : over ? 'past' : n <= 3 ? 'soon' : '';
   const st = n === 0 ? '今天' : on ? `第 ${1 - n} 天` : over ? '已結束' : n === 1 ? '明天' : `${n} 天後`;
-  return `<a class="job ${cls}" href="${esc(j.url)}"><div><div class="d">${dt.getMonth()+1}/${dt.getDate()}</div><div class="w">週${W[dt.getDay()]}</div></div><div class="n">${esc(j.name)}</div><div class="st">${st}</div><div class="arrow">›</div></a>`;
+  // 多天的活動在星期幾旁邊寫為期幾天（Lee 2026-09-28）；單日不寫
+  const span = days(j.date, j.end) + 1;
+  return `<a class="job ${cls}" href="${esc(j.url)}"><div><div class="d">${dt.getMonth()+1}/${dt.getDate()}</div><div class="w">週${W[dt.getDay()]}${span > 1 ? `・${span} 天` : ''}</div></div><div class="n">${esc(j.name)}</div><div class="st">${st}</div><div class="arrow">›</div></a>`;
 }
 function render() {
   const t = today(), up = J.filter(j => j.end >= t), past = J.filter(j => j.end < t).reverse();
