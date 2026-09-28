@@ -38,10 +38,10 @@ footer{color:var(--ink3);font-size:12px;text-align:center;padding:8px 16px 28px}
 </style>
 </head>
 <body>
-<header class="top"><div class="in"><h1>工作項目時間管理</h1><div class="sub">點一個工作，進到那一天的時間表</div></div></header>
-<main id="list"><ul><li><a href="https://leeinsmart.github.io/V8-0929-LIVE/">0929 沐容美學診所拍攝</a></li><li><a href="https://leeinsmart.github.io/MAVIS0930-LIVE/">0930 MAVIS活動工作時間表</a></li></ul></main>
+<header class="top"><div class="in"><h1>工作項目時間管理</h1><div class="sub">點一個工作，進到它的時間表</div></div></header>
+<main id="list"><ul><li><a href="https://leeinsmart.github.io/V8-0929-LIVE/">0929 沐容美學診所拍攝</a></li><li><a href="https://leeinsmart.github.io/MAVIS0930-LIVE/">0930 MAVIS活動工作時間表</a></li><li><a href="https://leeinsmart.github.io/HACHUU-1127-TPE/">1127 Hachuu 台北快閃工作時間表</a></li><li><a href="https://leeinsmart.github.io/HACHUU-1211-TXG/">1211 Hachuu 台中快閃工作時間表</a></li></ul></main>
 <footer>2026-09-28 產生</footer>
-<script id="data" type="application/json">[{"date": "2026-09-29", "tag": "0929", "name": "沐容美學診所拍攝", "url": "https://leeinsmart.github.io/V8-0929-LIVE/"}, {"date": "2026-09-30", "tag": "0930", "name": "MAVIS活動工作時間表", "url": "https://leeinsmart.github.io/MAVIS0930-LIVE/"}]</script>
+<script id="data" type="application/json">[{"date": "2026-09-29", "end": "2026-09-29", "tag": "0929", "name": "沐容美學診所拍攝", "url": "https://leeinsmart.github.io/V8-0929-LIVE/"}, {"date": "2026-09-30", "end": "2026-09-30", "tag": "0930", "name": "MAVIS活動工作時間表", "url": "https://leeinsmart.github.io/MAVIS0930-LIVE/"}, {"date": "2026-11-27", "end": "2026-11-29", "tag": "1127", "name": "Hachuu 台北快閃工作時間表", "url": "https://leeinsmart.github.io/HACHUU-1127-TPE/"}, {"date": "2026-12-11", "end": "2026-12-13", "tag": "1211", "name": "Hachuu 台中快閃工作時間表", "url": "https://leeinsmart.github.io/HACHUU-1211-TXG/"}]</script>
 <script>
 const J = JSON.parse(document.getElementById('data').textContent);
 const W = '日一二三四五六';
@@ -51,12 +51,13 @@ function days(a, b) { return Math.round((Date.parse(b + 'T00:00:00') - Date.pars
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function card(j, t) {
   const n = days(t, j.date), dt = new Date(j.date + 'T00:00:00');
-  const cls = n === 0 ? 'today' : n < 0 ? 'past' : n <= 3 ? 'soon' : '';
-  const st = n === 0 ? '今天' : n < 0 ? '已結束' : n === 1 ? '明天' : `${n} 天後`;
+  const on = j.date <= t && t <= j.end, over = j.end < t;
+  const cls = on ? 'today' : over ? 'past' : n <= 3 ? 'soon' : '';
+  const st = n === 0 ? '今天' : on ? `第 ${1 - n} 天` : over ? '已結束' : n === 1 ? '明天' : `${n} 天後`;
   return `<a class="job ${cls}" href="${esc(j.url)}"><div><div class="d">${dt.getMonth()+1}/${dt.getDate()}</div><div class="w">週${W[dt.getDay()]}</div></div><div class="n">${esc(j.name)}</div><div class="st">${st}</div><div class="arrow">›</div></a>`;
 }
 function render() {
-  const t = today(), up = J.filter(j => j.date >= t), past = J.filter(j => j.date < t).reverse();
+  const t = today(), up = J.filter(j => j.end >= t), past = J.filter(j => j.end < t).reverse();
   let h = up.length ? `<h2>進行中與接下來</h2>${up.map(j => card(j, t)).join('')}` : '<h2>目前沒有接下來的工作</h2>';
   if (past.length) h += `<h2>已結束</h2>${past.map(j => card(j, t)).join('')}`;
   document.getElementById('list').innerHTML = h;
